@@ -19,10 +19,16 @@ public partial class App : System.Windows.Application
     private GlobalHookService? _globalHookService;
     private WheelWindow? _activeWheelWindow;
     private ToolStripMenuItem? _caffeineMenuItem;
+    private ToolStripMenuItem? _startWithWindowsMenuItem;
+    private SettingsWindow? _activeSettingsWindow;
+
+    private List<WheelItem> _cachedItems = new();
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        ReloadConfig();
 
         _notifyIcon = new NotifyIcon
         {
@@ -45,17 +51,18 @@ public partial class App : System.Windows.Application
 
         var settingsItem = new ToolStripMenuItem("Settings", null, (sender, args) =>
         {
-            // Stub: does nothing yet
+            OpenSettingsWindow();
         });
 
-        var startWithWindowsItem = new ToolStripMenuItem("Start with Windows")
+        _startWithWindowsMenuItem = new ToolStripMenuItem("Start with Windows")
         {
             CheckOnClick = true,
-            Checked = false
+            Checked = StartupService.IsStartWithWindowsEnabled()
         };
-        startWithWindowsItem.Click += (sender, args) =>
+        _startWithWindowsMenuItem.Click += (sender, args) =>
         {
-            // Stub: does nothing yet
+            bool enable = _startWithWindowsMenuItem.Checked;
+            StartupService.SetStartWithWindows(enable);
         };
 
         var quitItem = new ToolStripMenuItem("Quit", null, (sender, args) =>
@@ -67,7 +74,7 @@ public partial class App : System.Windows.Application
         contextMenu.Items.Add(_caffeineMenuItem);
         contextMenu.Items.Add(new ToolStripSeparator());
         contextMenu.Items.Add(settingsItem);
-        contextMenu.Items.Add(startWithWindowsItem);
+        contextMenu.Items.Add(_startWithWindowsMenuItem);
         contextMenu.Items.Add(new ToolStripSeparator());
         contextMenu.Items.Add(quitItem);
 
@@ -75,6 +82,40 @@ public partial class App : System.Windows.Application
 
         InitializeGlobalHooks();
         InitializeClipboardMonitor();
+    }
+
+    public void ReloadConfig()
+    {
+        _cachedItems = WheelConfigService.LoadConfig();
+        Debug.WriteLine($"[App] Loaded {_cachedItems.Count} top-level wheel items from config.");
+    }
+
+    public void SyncAutostartMenuItem(bool isEnabled)
+    {
+        if (_startWithWindowsMenuItem != null)
+        {
+            _startWithWindowsMenuItem.Checked = isEnabled;
+        }
+    }
+
+    public void OpenSettingsWindow()
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (_activeSettingsWindow != null && _activeSettingsWindow.IsLoaded)
+            {
+                _activeSettingsWindow.Activate();
+                return;
+            }
+
+            _activeSettingsWindow = new SettingsWindow();
+            _activeSettingsWindow.Closed += (s, args) =>
+            {
+                _activeSettingsWindow = null;
+            };
+            _activeSettingsWindow.Show();
+            _activeSettingsWindow.Activate();
+        });
     }
 
     private void InitializeClipboardMonitor()
@@ -133,9 +174,7 @@ public partial class App : System.Windows.Application
                 _activeWheelWindow = null;
             }
 
-            List<WheelItem> items = WheelConfigService.LoadConfig();
-
-            _activeWheelWindow = new WheelWindow(centerPosition, items);
+            _activeWheelWindow = new WheelWindow(centerPosition, _cachedItems);
             
             _activeWheelWindow.ItemSelected += (s, selectedItem) =>
             {
@@ -210,6 +249,12 @@ public partial class App : System.Windows.Application
     {
         CaffeineToggleService.Instance.Disable();
         ClipboardMonitorService.Instance.Stop();
+
+        if (_activeSettingsWindow != null)
+        {
+            _activeSettingsWindow.Close();
+            _activeSettingsWindow = null;
+        }
 
         if (_activeWheelWindow != null)
         {
