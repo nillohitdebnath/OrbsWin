@@ -1,0 +1,53 @@
+<Window x:Class="OrbsWin.Tools.TimerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="TimerWindow"
+        Width="220" Height="260"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual">
+    <Border Background="#F01E1E24" CornerRadius="12" BorderBrush="#60FFFFFF" BorderThickness="1.5" Margin="8">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Color="Black" Opacity="0.6"/>
+        </Border.Effect>
+
+        <Grid Margin="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                <TextBlock Text="Timer" Foreground="White" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                <Button Content="✕" Click="OnCloseClick" Foreground="#A0FFFFFF" Background="Transparent" BorderThickness="0" FontSize="12" HorizontalAlignment="Right" Cursor="Hand"/>
+            </DockPanel>
+
+            <!-- Digital Display -->
+            <TextBlock x:Name="TimerDisplay" Grid.Row="1" Text="00:00" Foreground="#FF007ACC" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+            <!-- Presets -->
+            <UniformGrid Grid.Row="2" Columns="3" Margin="0,0,0,8">
+                <Button Content="5m" Click="OnPresetClick" Tag="300" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="10m" Click="OnPresetClick" Tag="600" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="25m" Click="OnPresetClick" Tag="1500" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+            </UniformGrid>
+
+            <!-- Control Buttons -->
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button x:Name="StartPauseButton" Grid.Column="0" Content="Start" Click="OnStartPauseClick" Margin="2" Padding="6" Background="#FF007ACC" Foreground="White" BorderThickness="0" FontWeight="Bold"/>
+                <Button Content="Reset" Click="OnResetClick" Grid.Column="1" Margin="2" Padding="6" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

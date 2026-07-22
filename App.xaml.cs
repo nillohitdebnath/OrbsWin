@@ -5,6 +5,8 @@ using System.Drawing;
 using System.IO;
 using System.Windows;
 using System.Windows.Forms;
+using OrbsWin.Services;
+using OrbsWin.Tools;
 
 namespace OrbsWin;
 
@@ -16,6 +18,7 @@ public partial class App : System.Windows.Application
     private NotifyIcon? _notifyIcon;
     private GlobalHookService? _globalHookService;
     private WheelWindow? _activeWheelWindow;
+    private ToolStripMenuItem? _caffeineMenuItem;
 
     private readonly List<WheelItem> _testWheelItems = new()
     {
@@ -23,6 +26,7 @@ public partial class App : System.Windows.Application
         new WheelItem("Timer"),
         new WheelItem("Clipboard"),
         new WheelItem("Color Picker"),
+        new WheelItem("Caffeine"),
         new WheelItem("Notes", null, new List<WheelItem>
         {
             new WheelItem("New Note"),
@@ -45,6 +49,16 @@ public partial class App : System.Windows.Application
 
         var contextMenu = new ContextMenuStrip();
 
+        _caffeineMenuItem = new ToolStripMenuItem("Caffeine (Prevent Sleep)")
+        {
+            CheckOnClick = true,
+            Checked = false
+        };
+        _caffeineMenuItem.Click += (sender, args) =>
+        {
+            ToggleCaffeineState();
+        };
+
         var settingsItem = new ToolStripMenuItem("Settings", null, (sender, args) =>
         {
             // Stub: does nothing yet
@@ -66,6 +80,8 @@ public partial class App : System.Windows.Application
             Shutdown();
         });
 
+        contextMenu.Items.Add(_caffeineMenuItem);
+        contextMenu.Items.Add(new ToolStripSeparator());
         contextMenu.Items.Add(settingsItem);
         contextMenu.Items.Add(startWithWindowsItem);
         contextMenu.Items.Add(new ToolStripSeparator());
@@ -74,6 +90,26 @@ public partial class App : System.Windows.Application
         _notifyIcon.ContextMenuStrip = contextMenu;
 
         InitializeGlobalHooks();
+        InitializeClipboardMonitor();
+    }
+
+    private void InitializeClipboardMonitor()
+    {
+        // Dummy hidden window to anchor HWND clipboard format listener
+        Window anchorWindow = new Window
+        {
+            Width = 0,
+            Height = 0,
+            WindowStyle = WindowStyle.None,
+            ShowInTaskbar = false,
+            Visibility = Visibility.Hidden
+        };
+        anchorWindow.SourceInitialized += (s, e) =>
+        {
+            ClipboardMonitorService.Instance.Start(anchorWindow);
+        };
+        anchorWindow.Show();
+        anchorWindow.Hide();
     }
 
     private void InitializeGlobalHooks()
@@ -120,12 +156,37 @@ public partial class App : System.Windows.Application
                 Debug.WriteLine($"[WheelWindow] Item Selected: {selectedItem.Name}");
                 _activeWheelWindow = null;
 
-                if (selectedItem.Name == "Color Picker")
+                System.Drawing.Point releasePos = System.Windows.Forms.Cursor.Position;
+
+                switch (selectedItem.Name)
                 {
-                    System.Drawing.Point releasePos = System.Windows.Forms.Cursor.Position;
-                    var colorPicker = new Tools.ColorPickerWindow(releasePos);
-                    colorPicker.Show();
-                    colorPicker.Activate();
+                    case "Color Picker":
+                        var colorPicker = new ColorPickerWindow(releasePos);
+                        colorPicker.Show();
+                        colorPicker.Activate();
+                        break;
+
+                    case "Timer":
+                        var timerWin = new TimerWindow(releasePos, ShowBalloonNotification);
+                        timerWin.Show();
+                        timerWin.Activate();
+                        break;
+
+                    case "Calculator":
+                        var calcWin = new CalculatorWindow(releasePos);
+                        calcWin.Show();
+                        calcWin.Activate();
+                        break;
+
+                    case "Clipboard":
+                        var clipWin = new ClipboardHistoryWindow(releasePos);
+                        clipWin.Show();
+                        clipWin.Activate();
+                        break;
+
+                    case "Caffeine":
+                        ToggleCaffeineState();
+                        break;
                 }
             };
 
@@ -145,6 +206,23 @@ public partial class App : System.Windows.Application
         });
     }
 
+    private void ToggleCaffeineState()
+    {
+        bool isEnabled = CaffeineToggleService.Instance.Toggle(ShowBalloonNotification);
+        if (_caffeineMenuItem != null)
+        {
+            _caffeineMenuItem.Checked = isEnabled;
+        }
+    }
+
+    public void ShowBalloonNotification(string title, string text)
+    {
+        if (_notifyIcon != null)
+        {
+            _notifyIcon.ShowBalloonTip(3000, title, text, ToolTipIcon.Info);
+        }
+    }
+
     private Icon LoadOrCreateIcon()
     {
         string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "tray-icon.ico");
@@ -161,7 +239,6 @@ public partial class App : System.Windows.Application
             }
         }
 
-        // Generate fallback icon dynamically if missing or invalid
         using Bitmap bitmap = new Bitmap(16, 16);
         using Graphics g = Graphics.FromImage(bitmap);
         g.Clear(Color.Transparent);
@@ -175,6 +252,9 @@ public partial class App : System.Windows.Application
 
     private void CleanupHooksAndNotifyIcon()
     {
+        CaffeineToggleService.Instance.Disable();
+        ClipboardMonitorService.Instance.Stop();
+
         if (_activeWheelWindow != null)
         {
             _activeWheelWindow.Close();

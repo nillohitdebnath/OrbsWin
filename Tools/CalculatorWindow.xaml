@@ -1,0 +1,70 @@
+<Window x:Class="OrbsWin.Tools.CalculatorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="CalculatorWindow"
+        Width="220" Height="300"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual">
+    <Border Background="#F01E1E24" CornerRadius="12" BorderBrush="#60FFFFFF" BorderThickness="1.5" Margin="8">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Color="Black" Opacity="0.6"/>
+        </Border.Effect>
+
+        <Grid Margin="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                <TextBlock Text="Calculator" Foreground="White" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                <Button Content="✕" Click="OnCloseClick" Foreground="#A0FFFFFF" Background="Transparent" BorderThickness="0" FontSize="12" HorizontalAlignment="Right" Cursor="Hand"/>
+            </DockPanel>
+
+            <!-- Display -->
+            <Border Grid.Row="1" Background="#20FFFFFF" CornerRadius="6" Padding="8,6" Margin="0,0,0,10">
+                <TextBlock x:Name="CalcDisplay" Text="0" Foreground="White" FontSize="24" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- Keypad -->
+            <UniformGrid Grid.Row="2" Rows="5" Columns="4">
+                <!-- Row 1 -->
+                <Button Content="C" Click="OnClearClick" Margin="2" Background="#40FF4444" Foreground="White" BorderThickness="0" FontWeight="Bold"/>
+                <Button Content="±" Click="OnNegateClick" Margin="2" Background="#25FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="%" Click="OnOperatorClick" Tag="%" Margin="2" Background="#25FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="÷" Click="OnOperatorClick" Tag="/" Margin="2" Background="#FF007ACC" Foreground="White" BorderThickness="0" FontWeight="Bold"/>
+
+                <!-- Row 2 -->
+                <Button Content="7" Click="OnDigitClick" Tag="7" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="8" Click="OnDigitClick" Tag="8" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="9" Click="OnDigitClick" Tag="9" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="×" Click="OnOperatorClick" Tag="*" Margin="2" Background="#FF007ACC" Foreground="White" BorderThickness="0" FontWeight="Bold"/>
+
+                <!-- Row 3 -->
+                <Button Content="4" Click="OnDigitClick" Tag="4" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="5" Click="OnDigitClick" Tag="5" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="6" Click="OnDigitClick" Tag="6" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="-" Click="OnOperatorClick" Tag="-" Margin="2" Background="#FF007ACC" Foreground="White" BorderThickness="0" FontWeight="Bold"/>
+
+                <!-- Row 4 -->
+                <Button Content="1" Click="OnDigitClick" Tag="1" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="2" Click="OnDigitClick" Tag="2" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="3" Click="OnDigitClick" Tag="3" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="+" Click="OnOperatorClick" Tag="+" Margin="2" Background="#FF007ACC" Foreground="White" BorderThickness="0" FontWeight="Bold"/>
+
+                <!-- Row 5 -->
+                <Button Content="0" Click="OnDigitClick" Tag="0" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="." Click="OnDecimalClick" Margin="2" Background="#30FFFFFF" Foreground="White" BorderThickness="0"/>
+                <Button Content="=" Click="OnEqualsClick" Margin="2" Background="#FF007ACC" Foreground="White" BorderThickness="0" FontWeight="Bold"/>
+                <Button Content="⌫" Click="OnBackspaceClick" Margin="2" Background="#25FFFFFF" Foreground="White" BorderThickness="0"/>
+            </UniformGrid>
+        </Grid>
+    </Border>
+</Window>
