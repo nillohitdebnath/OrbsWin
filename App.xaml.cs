@@ -23,7 +23,12 @@ public partial class App : System.Windows.Application
         new WheelItem("Timer"),
         new WheelItem("Clipboard"),
         new WheelItem("Color Picker"),
-        new WheelItem("Notes"),
+        new WheelItem("Notes", null, new List<WheelItem>
+        {
+            new WheelItem("New Note"),
+            new WheelItem("Recent Notes"),
+            new WheelItem("Search Notes")
+        }),
         new WheelItem("Settings")
     };
 

@@ -6,7 +6,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 using MediaColor = System.Windows.Media.Color;
 using WpfPoint = System.Windows.Point;
@@ -20,11 +22,29 @@ public partial class WheelWindow : Window
     public event EventHandler<WheelItem>? ItemSelected;
     public event EventHandler? SelectionCancelled;
 
-    private readonly List<WheelItem> _items;
+    private class MenuLevel
+    {
+        public List<WheelItem> Items { get; }
+        public string Title { get; }
+
+        public MenuLevel(List<WheelItem> items, string title = "")
+        {
+            Items = items;
+            Title = title;
+        }
+    }
+
+    private readonly Stack<MenuLevel> _levelStack = new();
+    private List<WheelItem> _currentItems = new();
     private readonly List<Path> _slicePaths = new();
     private readonly List<TextBlock> _sliceLabels = new();
     
     private int _selectedIndex = -1;
+    private bool _isCursorInCenter;
+
+    private readonly DispatcherTimer _dwellTimer;
+    private int _dwellTargetIndex = -1;
+    private const int DwellThresholdMs = 400;
 
     private const double OuterRadius = 180.0;
     private const double InnerRadius = 45.0;
@@ -33,18 +53,30 @@ public partial class WheelWindow : Window
 
     private static readonly SolidColorBrush NormalBrush = new(MediaColor.FromArgb(210, 30, 30, 40));
     private static readonly SolidColorBrush HighlightBrush = new(MediaColor.FromArgb(240, 0, 122, 204));
+    private static readonly SolidColorBrush BranchingBrush = new(MediaColor.FromArgb(240, 70, 150, 230));
     private static readonly SolidColorBrush StrokeBrush = new(MediaColor.FromArgb(180, 255, 255, 255));
     private static readonly SolidColorBrush TextBrush = new(Colors.White);
+
+    private Ellipse? _centerCircle;
+    private TextBlock? _centerTextBlock;
 
     public WheelWindow(DrawingPoint centerScreenPosition, List<WheelItem> items)
     {
         InitializeComponent();
 
-        _items = items ?? new List<WheelItem>();
+        List<WheelItem> rootItems = items ?? new List<WheelItem>();
+        _levelStack.Push(new MenuLevel(rootItems));
+        _currentItems = rootItems;
 
         // Center window on screen point
         Left = centerScreenPosition.X - (Width / 2.0);
         Top = centerScreenPosition.Y - (Height / 2.0);
+
+        _dwellTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(DwellThresholdMs)
+        };
+        _dwellTimer.Tick += OnDwellTimerTick;
 
         Loaded += OnLoaded;
         KeyDown += OnKeyDown;
@@ -68,13 +100,17 @@ public partial class WheelWindow : Window
         NativeMethods.SetWindowLong(hwnd, NativeMethods.GWL_EXSTYLE, exStyle | NativeMethods.WS_EX_TOOLWINDOW);
     }
 
-    private void RenderSlices()
+    private void RenderSlices(bool animate = false)
     {
+        _dwellTimer.Stop();
+        _dwellTargetIndex = -1;
+
         WheelCanvas.Children.Clear();
         _slicePaths.Clear();
         _sliceLabels.Clear();
+        _selectedIndex = -1;
 
-        int count = _items.Count;
+        int count = _currentItems.Count;
         if (count == 0) return;
 
         double anglePerSlice = 360.0 / count;
@@ -106,9 +142,15 @@ public partial class WheelWindow : Window
             double labelX = CenterX + (labelRadius * Math.Cos(midRad));
             double labelY = CenterY + (labelRadius * Math.Sin(midRad));
 
+            string text = _currentItems[i].Name;
+            if (_currentItems[i].Children.Count > 0)
+            {
+                text += " ▶";
+            }
+
             TextBlock textBlock = new TextBlock
             {
-                Text = _items[i].Name,
+                Text = text,
                 Foreground = TextBrush,
                 FontSize = 13,
                 FontWeight = FontWeights.SemiBold,
@@ -127,8 +169,8 @@ public partial class WheelWindow : Window
             _sliceLabels.Add(textBlock);
         }
 
-        // Draw inner center circle decoration
-        Ellipse centerCircle = new Ellipse
+        // Draw inner center circle (acts as back button if in nested menu)
+        _centerCircle = new Ellipse
         {
             Width = InnerRadius * 2,
             Height = InnerRadius * 2,
@@ -137,9 +179,47 @@ public partial class WheelWindow : Window
             StrokeThickness = 1.5,
             IsHitTestVisible = false
         };
-        Canvas.SetLeft(centerCircle, CenterX - InnerRadius);
-        Canvas.SetTop(centerCircle, CenterY - InnerRadius);
-        WheelCanvas.Children.Add(centerCircle);
+        Canvas.SetLeft(_centerCircle, CenterX - InnerRadius);
+        Canvas.SetTop(_centerCircle, CenterY - InnerRadius);
+        WheelCanvas.Children.Add(_centerCircle);
+
+        if (_levelStack.Count > 1)
+        {
+            _centerTextBlock = new TextBlock
+            {
+                Text = "◀ Back",
+                Foreground = TextBrush,
+                FontSize = 11,
+                FontWeight = FontWeights.Bold,
+                IsHitTestVisible = false
+            };
+            _centerTextBlock.Measure(new WpfSize(double.PositiveInfinity, double.PositiveInfinity));
+            WpfSize centerTextSize = _centerTextBlock.DesiredSize;
+            Canvas.SetLeft(_centerTextBlock, CenterX - (centerTextSize.Width / 2.0));
+            Canvas.SetTop(_centerTextBlock, CenterY - (centerTextSize.Height / 2.0));
+            WheelCanvas.Children.Add(_centerTextBlock);
+        }
+
+        if (animate)
+        {
+            AnimateWheelFadeIn();
+        }
+    }
+
+    private void AnimateWheelFadeIn()
+    {
+        DoubleAnimation opacityAnim = new DoubleAnimation(0.2, 1.0, TimeSpan.FromMilliseconds(200));
+        ScaleTransform scaleTransform = new ScaleTransform(0.85, 0.85, CenterX, CenterY);
+        WheelCanvas.RenderTransform = scaleTransform;
+
+        DoubleAnimation scaleAnim = new DoubleAnimation(0.85, 1.0, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        WheelCanvas.BeginAnimation(OpacityProperty, opacityAnim);
+        scaleTransform.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+        scaleTransform.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
     }
 
     private Geometry CreateSliceGeometry(double startAngleDegrees, double endAngleDegrees)
@@ -179,8 +259,9 @@ public partial class WheelWindow : Window
         double distance = Math.Sqrt((dx * dx) + (dy * dy));
 
         int newIndex = -1;
+        _isCursorInCenter = distance < InnerRadius;
 
-        if (distance >= InnerRadius && distance <= OuterRadius && _items.Count > 0)
+        if (distance >= InnerRadius && distance <= OuterRadius && _currentItems.Count > 0)
         {
             // Calculate angle relative to 12 o'clock (-90 degrees)
             double angleRad = Math.Atan2(dy, dx);
@@ -189,12 +270,12 @@ public partial class WheelWindow : Window
             // Normalize to 0..360 starting from 12 o'clock
             double normalizedAngle = (angleDeg + 90.0 + 360.0) % 360.0;
 
-            double anglePerSlice = 360.0 / _items.Count;
+            double anglePerSlice = 360.0 / _currentItems.Count;
             newIndex = (int)(normalizedAngle / anglePerSlice);
 
-            if (newIndex >= _items.Count)
+            if (newIndex >= _currentItems.Count)
             {
-                newIndex = _items.Count - 1;
+                newIndex = _currentItems.Count - 1;
             }
         }
 
@@ -203,6 +284,19 @@ public partial class WheelWindow : Window
 
     private void UpdateHighlight(int index)
     {
+        // Highlight center back button if cursor is in center and sub-level active
+        if (_centerCircle != null)
+        {
+            if (_isCursorInCenter && _levelStack.Count > 1)
+            {
+                _centerCircle.Fill = HighlightBrush;
+            }
+            else
+            {
+                _centerCircle.Fill = new SolidColorBrush(MediaColor.FromArgb(240, 20, 20, 25));
+            }
+        }
+
         if (_selectedIndex == index) return;
 
         if (_selectedIndex >= 0 && _selectedIndex < _slicePaths.Count)
@@ -215,14 +309,81 @@ public partial class WheelWindow : Window
         if (_selectedIndex >= 0 && _selectedIndex < _slicePaths.Count)
         {
             _slicePaths[_selectedIndex].Fill = HighlightBrush;
+
+            // Dwell timer check for branching into children
+            WheelItem targetItem = _currentItems[_selectedIndex];
+            if (targetItem.Children.Count > 0)
+            {
+                _dwellTargetIndex = _selectedIndex;
+                _dwellTimer.Stop();
+                _dwellTimer.Start();
+            }
+            else
+            {
+                _dwellTimer.Stop();
+                _dwellTargetIndex = -1;
+            }
         }
+        else
+        {
+            _dwellTimer.Stop();
+            _dwellTargetIndex = -1;
+        }
+    }
+
+    private void OnDwellTimerTick(object? sender, EventArgs e)
+    {
+        _dwellTimer.Stop();
+
+        if (_dwellTargetIndex >= 0 && _dwellTargetIndex == _selectedIndex && _dwellTargetIndex < _currentItems.Count)
+        {
+            WheelItem item = _currentItems[_dwellTargetIndex];
+            if (item.Children.Count > 0)
+            {
+                BranchIntoChildLevel(item);
+            }
+        }
+    }
+
+    private void BranchIntoChildLevel(WheelItem item)
+    {
+        _levelStack.Push(new MenuLevel(item.Children, item.Name));
+        _currentItems = item.Children;
+        RenderSlices(animate: true);
+    }
+
+    private bool NavigateBackLevel()
+    {
+        if (_levelStack.Count > 1)
+        {
+            _levelStack.Pop();
+            _currentItems = _levelStack.Peek().Items;
+            RenderSlices(animate: true);
+            return true;
+        }
+        return false;
     }
 
     private void OnWindowMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (_selectedIndex >= 0 && _selectedIndex < _items.Count)
+        // Dead center click inside a nested submenu goes back up one level
+        if (_isCursorInCenter && _levelStack.Count > 1)
         {
-            WheelItem item = _items[_selectedIndex];
+            NavigateBackLevel();
+            return;
+        }
+
+        if (_selectedIndex >= 0 && _selectedIndex < _currentItems.Count)
+        {
+            WheelItem item = _currentItems[_selectedIndex];
+
+            if (item.Children.Count > 0)
+            {
+                // Immediate click on parent item branches into child menu
+                BranchIntoChildLevel(item);
+                return;
+            }
+
             ItemSelected?.Invoke(this, item);
         }
         else
