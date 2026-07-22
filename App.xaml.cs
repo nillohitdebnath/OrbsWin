@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -14,6 +15,17 @@ public partial class App : System.Windows.Application
 {
     private NotifyIcon? _notifyIcon;
     private GlobalHookService? _globalHookService;
+    private WheelWindow? _activeWheelWindow;
+
+    private readonly List<WheelItem> _testWheelItems = new()
+    {
+        new WheelItem("Calculator"),
+        new WheelItem("Timer"),
+        new WheelItem("Clipboard"),
+        new WheelItem("Color Picker"),
+        new WheelItem("Notes"),
+        new WheelItem("Settings")
+    };
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -68,22 +80,14 @@ public partial class App : System.Windows.Application
             _globalHookService.HotkeyHoldStarted += (sender, args) =>
             {
                 System.Drawing.Point cursorPos = System.Windows.Forms.Cursor.Position;
-                Debug.WriteLine($"[HotkeyHoldStarted] Ctrl+Shift held down at Cursor Position: {cursorPos}");
-            };
-
-            _globalHookService.HotkeyHoldEnded += (sender, args) =>
-            {
-                Debug.WriteLine("[HotkeyHoldEnded] Ctrl+Shift released.");
+                Debug.WriteLine($"[HotkeyHoldStarted] Triggered at {cursorPos}");
+                ShowWheelWindow(cursorPos);
             };
 
             _globalHookService.ClickHoldStarted += (sender, point) =>
             {
-                Debug.WriteLine($"[ClickHoldStarted] Left Click Hold started at Cursor Position: {point}");
-            };
-
-            _globalHookService.ClickHoldEnded += (sender, point) =>
-            {
-                Debug.WriteLine($"[ClickHoldEnded] Left Click Hold ended at Cursor Position: {point}");
+                Debug.WriteLine($"[ClickHoldStarted] Triggered at {point}");
+                ShowWheelWindow(point);
             };
 
             _globalHookService.Start();
@@ -92,6 +96,40 @@ public partial class App : System.Windows.Application
         {
             Debug.WriteLine($"[App] Failed to initialize GlobalHookService: {ex.Message}");
         }
+    }
+
+    private void ShowWheelWindow(System.Drawing.Point centerPosition)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (_activeWheelWindow != null)
+            {
+                _activeWheelWindow.Close();
+                _activeWheelWindow = null;
+            }
+
+            _activeWheelWindow = new WheelWindow(centerPosition, _testWheelItems);
+            
+            _activeWheelWindow.ItemSelected += (s, selectedItem) =>
+            {
+                Debug.WriteLine($"[WheelWindow] Item Selected: {selectedItem.Name}");
+                _activeWheelWindow = null;
+            };
+
+            _activeWheelWindow.SelectionCancelled += (s, args) =>
+            {
+                Debug.WriteLine("[WheelWindow] Selection Cancelled.");
+                _activeWheelWindow = null;
+            };
+
+            _activeWheelWindow.Closed += (s, args) =>
+            {
+                _activeWheelWindow = null;
+            };
+
+            _activeWheelWindow.Show();
+            _activeWheelWindow.Activate();
+        });
     }
 
     private Icon LoadOrCreateIcon()
@@ -124,6 +162,12 @@ public partial class App : System.Windows.Application
 
     private void CleanupHooksAndNotifyIcon()
     {
+        if (_activeWheelWindow != null)
+        {
+            _activeWheelWindow.Close();
+            _activeWheelWindow = null;
+        }
+
         if (_globalHookService != null)
         {
             _globalHookService.Dispose();
