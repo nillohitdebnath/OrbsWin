@@ -119,6 +119,14 @@ public partial class App : System.Windows.Application
             {
                 Debug.WriteLine($"[WheelWindow] Item Selected: {selectedItem.Name}");
                 _activeWheelWindow = null;
+
+                if (selectedItem.Name == "Color Picker")
+                {
+                    System.Drawing.Point releasePos = System.Windows.Forms.Cursor.Position;
+                    var colorPicker = new Tools.ColorPickerWindow(releasePos);
+                    colorPicker.Show();
+                    colorPicker.Activate();
+                }
             };
 
             _activeWheelWindow.SelectionCancelled += (s, args) =>
