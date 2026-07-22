@@ -163,6 +163,23 @@ public partial class CalculatorWindow : Window
         }
     }
 
+    public bool IsPinned { get; private set; }
+
+    private void OnPinClick(object sender, RoutedEventArgs e)
+    {
+        IsPinned = !IsPinned;
+        PinIconText.Opacity = IsPinned ? 1.0 : 0.5;
+        Topmost = true;
+    }
+
+    private void OnHeaderDrag(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed)
+        {
+            DragMove();
+        }
+    }
+
     private void OnCloseClick(object sender, RoutedEventArgs e)
     {
         Close();

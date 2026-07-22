@@ -120,6 +120,23 @@ public partial class TimerWindow : Window
         UpdateDisplay();
     }
 
+    public bool IsPinned { get; private set; }
+
+    private void OnPinClick(object sender, RoutedEventArgs e)
+    {
+        IsPinned = !IsPinned;
+        PinIconText.Opacity = IsPinned ? 1.0 : 0.5;
+        Topmost = true; // Always float topmost
+    }
+
+    private void OnHeaderDrag(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed)
+        {
+            DragMove();
+        }
+    }
+
     private void OnCloseClick(object sender, RoutedEventArgs e)
     {
         Close();

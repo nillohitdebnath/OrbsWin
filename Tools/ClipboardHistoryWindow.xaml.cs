@@ -56,6 +56,23 @@ public partial class ClipboardHistoryWindow : Window
         HistoryListBox.ItemsSource = history;
     }
 
+    public bool IsPinned { get; private set; }
+
+    private void OnPinClick(object sender, RoutedEventArgs e)
+    {
+        IsPinned = !IsPinned;
+        PinIconText.Opacity = IsPinned ? 1.0 : 0.5;
+        Topmost = true;
+    }
+
+    private void OnHeaderDrag(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed)
+        {
+            DragMove();
+        }
+    }
+
     private void OnHistoryItemClick(object sender, SelectionChangedEventArgs e)
     {
         if (HistoryListBox.SelectedItem is string selectedText)
@@ -68,7 +85,11 @@ public partial class ClipboardHistoryWindow : Window
             {
                 System.Diagnostics.Debug.WriteLine($"[ClipboardHistoryWindow] Error setting clipboard: {ex.Message}");
             }
-            Close();
+
+            if (!IsPinned)
+            {
+                Close();
+            }
         }
     }
 

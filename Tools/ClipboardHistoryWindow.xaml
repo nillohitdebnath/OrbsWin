@@ -17,10 +17,17 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+            <!-- Header / Drag Bar -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,8" MouseLeftButtonDown="OnHeaderDrag">
                 <TextBlock Text="Clipboard History" Foreground="{StaticResource BrushTextPrimary}" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
-                <Button Content="✕" Click="OnCloseClick" Foreground="{StaticResource BrushTextSecondary}" Background="Transparent" BorderThickness="0" FontSize="12" HorizontalAlignment="Right" Cursor="Hand"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <!-- Pin Button -->
+                    <Button x:Name="PinButton" Click="OnPinClick" Foreground="{StaticResource BrushTextSecondary}" Background="Transparent" BorderThickness="0" FontSize="12" Margin="0,0,4,0" Cursor="Hand" ToolTip="Pin window (stay open)">
+                        <TextBlock x:Name="PinIconText" Text="📌" Opacity="0.5"/>
+                    </Button>
+                    <!-- Close Button -->
+                    <Button Content="✕" Click="OnCloseClick" Foreground="{StaticResource BrushTextSecondary}" Background="Transparent" BorderThickness="0" FontSize="12" Cursor="Hand"/>
+                </StackPanel>
             </DockPanel>
 
             <!-- History List -->

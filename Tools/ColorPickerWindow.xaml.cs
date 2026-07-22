@@ -126,13 +126,31 @@ public partial class ColorPickerWindow : Window
         return bitmapImage;
     }
 
+    public bool IsPinned { get; private set; }
+
+    private void OnPinClick(object sender, RoutedEventArgs e)
+    {
+        IsPinned = !IsPinned;
+        PinIconText.Opacity = IsPinned ? 1.0 : 0.5;
+        Topmost = true;
+    }
+
+    private void OnHeaderDrag(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed)
+        {
+            DragMove();
+        }
+    }
+
+    private void OnCloseClick(object sender, RoutedEventArgs e)
+    {
+        _updateTimer.Stop();
+        Close();
+    }
+
     private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (_isCopied) return;
-
-        _isCopied = true;
-        _updateTimer.Stop();
-
         string hexCode = HexCodeText.Text;
         try
         {
@@ -146,17 +164,23 @@ public partial class ColorPickerWindow : Window
             System.Diagnostics.Debug.WriteLine($"[ColorPickerWindow] Clipboard error: {ex.Message}");
         }
 
-        // Close after a brief 600ms toast presentation
-        DispatcherTimer closeTimer = new DispatcherTimer
+        if (!IsPinned)
         {
-            Interval = TimeSpan.FromMilliseconds(600)
-        };
-        closeTimer.Tick += (s, args) =>
-        {
-            closeTimer.Stop();
-            Close();
-        };
-        closeTimer.Start();
+            _isCopied = true;
+            _updateTimer.Stop();
+
+            // Close after a brief 600ms toast presentation
+            DispatcherTimer closeTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(600)
+            };
+            closeTimer.Tick += (s, args) =>
+            {
+                closeTimer.Stop();
+                Close();
+            };
+            closeTimer.Start();
+        }
     }
 
     private void OnKeyDown(object sender, System.Windows.Input.KeyEventArgs e)

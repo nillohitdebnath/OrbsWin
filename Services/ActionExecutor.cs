@@ -55,28 +55,20 @@ public static class ActionExecutor
 
             case "color picker":
             case "colorpicker":
-                var colorPicker = new ColorPickerWindow(position);
-                colorPicker.Show();
-                colorPicker.Activate();
+                ToolWindowManager.ShowOrFocusToolWindow(() => new ColorPickerWindow(position));
                 break;
 
             case "timer":
-                var timerWin = new TimerWindow(position, notifyCallback);
-                timerWin.Show();
-                timerWin.Activate();
+                ToolWindowManager.ShowOrFocusToolWindow(() => new TimerWindow(position, notifyCallback));
                 break;
 
             case "calculator":
-                var calcWin = new CalculatorWindow(position);
-                calcWin.Show();
-                calcWin.Activate();
+                ToolWindowManager.ShowOrFocusToolWindow(() => new CalculatorWindow(position));
                 break;
 
             case "clipboard":
             case "clipboard history":
-                var clipWin = new ClipboardHistoryWindow(position);
-                clipWin.Show();
-                clipWin.Activate();
+                ToolWindowManager.ShowOrFocusToolWindow(() => new ClipboardHistoryWindow(position));
                 break;
 
             case "caffeine":

@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="ColorPickerWindow"
-        Width="180" Height="220"
+        Width="180" Height="240"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -14,12 +14,26 @@
         <Grid Margin="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
+            <!-- Header / Drag Bar -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,6" MouseLeftButtonDown="OnHeaderDrag">
+                <TextBlock Text="Color Picker" Foreground="{StaticResource BrushTextPrimary}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <!-- Pin Button -->
+                    <Button x:Name="PinButton" Click="OnPinClick" Foreground="{StaticResource BrushTextSecondary}" Background="Transparent" BorderThickness="0" FontSize="11" Margin="0,0,2,0" Cursor="Hand" ToolTip="Pin window (stay open)">
+                        <TextBlock x:Name="PinIconText" Text="📌" Opacity="0.5"/>
+                    </Button>
+                    <!-- Close Button -->
+                    <Button Content="✕" Click="OnCloseClick" Foreground="{StaticResource BrushTextSecondary}" Background="Transparent" BorderThickness="0" FontSize="11" Cursor="Hand"/>
+                </StackPanel>
+            </DockPanel>
+
             <!-- Color Swatch & Hex Display -->
-            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
                 <Border x:Name="ColorPreviewBox" Width="24" Height="24" CornerRadius="4" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Margin="0,0,8,0">
                     <Border.Background>
                         <SolidColorBrush x:Name="ColorPreviewBrush" Color="Black"/>
@@ -29,7 +43,7 @@
             </StackPanel>
 
             <!-- Magnified Pixel Grid View -->
-            <Border Grid.Row="1" CornerRadius="{StaticResource RadiusControl}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" ClipToBounds="True" Background="Black">
+            <Border Grid.Row="2" CornerRadius="{StaticResource RadiusControl}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" ClipToBounds="True" Background="Black">
                 <Grid>
                     <Image x:Name="MagnifierImage" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
                     <!-- Center Crosshair reticle -->
@@ -38,7 +52,7 @@
             </Border>
 
             <!-- Toast / Guidance Text -->
-            <TextBlock x:Name="ToastText" Grid.Row="2" Text="Click to Copy | Esc to Cancel" Foreground="{StaticResource BrushTextSecondary}" FontSize="10" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+            <TextBlock x:Name="ToastText" Grid.Row="3" Text="Click to Copy | Esc to Cancel" Foreground="{StaticResource BrushTextSecondary}" FontSize="10" HorizontalAlignment="Center" Margin="0,6,0,0"/>
         </Grid>
     </Border>
 </Window>
