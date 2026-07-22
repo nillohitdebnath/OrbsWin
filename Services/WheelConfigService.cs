@@ -68,6 +68,7 @@ public class WheelConfigService
     {
         return new List<WheelItem>
         {
+            new WheelItem("Screenshot", "builtin_tool", "Screenshot"),
             new WheelItem("Calculator", "builtin_tool", "Calculator"),
             new WheelItem("Timer", "builtin_tool", "Timer"),
             new WheelItem("Clipboard", "builtin_tool", "Clipboard"),

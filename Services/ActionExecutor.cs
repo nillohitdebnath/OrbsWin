@@ -47,6 +47,12 @@ public static class ActionExecutor
     {
         switch (toolName.ToLowerInvariant())
         {
+            case "screenshot":
+                var screenshotWin = new ScreenshotWindow(saveToFile: true);
+                screenshotWin.Show();
+                screenshotWin.Activate();
+                break;
+
             case "color picker":
             case "colorpicker":
                 var colorPicker = new ColorPickerWindow(position);

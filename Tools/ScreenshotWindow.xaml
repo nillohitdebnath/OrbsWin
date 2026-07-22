@@ -1,0 +1,40 @@
+<Window x:Class="OrbsWin.Tools.ScreenshotWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ScreenshotWindow"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual">
+    <Grid x:Name="MainGrid">
+        <!-- Captured Screen Background Image -->
+        <Image x:Name="ScreenImage" Stretch="Fill"/>
+
+        <!-- Dimming Overlay Canvas -->
+        <Canvas x:Name="SelectionCanvas" Background="#90000000">
+            <!-- Cutout / Selection Highlight Box -->
+            <Border x:Name="SelectionBorder"
+                    BorderBrush="{StaticResource BrushAccent}"
+                    BorderThickness="1.5"
+                    Background="Transparent"
+                    Visibility="Collapsed"/>
+        </Canvas>
+
+        <!-- Toast Confirmation Overlay -->
+        <Border x:Name="ToastBorder"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,0,0,50"
+                Padding="16,8"
+                Background="#EE131315"
+                BorderBrush="{StaticResource BrushBorder}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusPill}"
+                Visibility="Collapsed">
+            <TextBlock x:Name="ToastText" Text="Screenshot Copied to Clipboard!" Foreground="#00E678" FontSize="13" FontWeight="Bold"/>
+        </Border>
+    </Grid>
+</Window>
