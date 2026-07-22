@@ -20,22 +20,6 @@ public partial class App : System.Windows.Application
     private WheelWindow? _activeWheelWindow;
     private ToolStripMenuItem? _caffeineMenuItem;
 
-    private readonly List<WheelItem> _testWheelItems = new()
-    {
-        new WheelItem("Calculator"),
-        new WheelItem("Timer"),
-        new WheelItem("Clipboard"),
-        new WheelItem("Color Picker"),
-        new WheelItem("Caffeine"),
-        new WheelItem("Notes", null, new List<WheelItem>
-        {
-            new WheelItem("New Note"),
-            new WheelItem("Recent Notes"),
-            new WheelItem("Search Notes")
-        }),
-        new WheelItem("Settings")
-    };
-
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -149,45 +133,17 @@ public partial class App : System.Windows.Application
                 _activeWheelWindow = null;
             }
 
-            _activeWheelWindow = new WheelWindow(centerPosition, _testWheelItems);
+            List<WheelItem> items = WheelConfigService.LoadConfig();
+
+            _activeWheelWindow = new WheelWindow(centerPosition, items);
             
             _activeWheelWindow.ItemSelected += (s, selectedItem) =>
             {
-                Debug.WriteLine($"[WheelWindow] Item Selected: {selectedItem.Name}");
+                Debug.WriteLine($"[WheelWindow] Item Selected: {selectedItem.Name} (Type: {selectedItem.ItemType})");
                 _activeWheelWindow = null;
 
                 System.Drawing.Point releasePos = System.Windows.Forms.Cursor.Position;
-
-                switch (selectedItem.Name)
-                {
-                    case "Color Picker":
-                        var colorPicker = new ColorPickerWindow(releasePos);
-                        colorPicker.Show();
-                        colorPicker.Activate();
-                        break;
-
-                    case "Timer":
-                        var timerWin = new TimerWindow(releasePos, ShowBalloonNotification);
-                        timerWin.Show();
-                        timerWin.Activate();
-                        break;
-
-                    case "Calculator":
-                        var calcWin = new CalculatorWindow(releasePos);
-                        calcWin.Show();
-                        calcWin.Activate();
-                        break;
-
-                    case "Clipboard":
-                        var clipWin = new ClipboardHistoryWindow(releasePos);
-                        clipWin.Show();
-                        clipWin.Activate();
-                        break;
-
-                    case "Caffeine":
-                        ToggleCaffeineState();
-                        break;
-                }
+                ActionExecutor.Execute(selectedItem, releasePos, ShowBalloonNotification, ToggleCaffeineState);
             };
 
             _activeWheelWindow.SelectionCancelled += (s, args) =>
