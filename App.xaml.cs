@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Windows;
@@ -12,6 +13,7 @@ namespace OrbsWin;
 public partial class App : System.Windows.Application
 {
     private NotifyIcon? _notifyIcon;
+    private GlobalHookService? _globalHookService;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -43,6 +45,7 @@ public partial class App : System.Windows.Application
 
         var quitItem = new ToolStripMenuItem("Quit", null, (sender, args) =>
         {
+            CleanupHooksAndNotifyIcon();
             Shutdown();
         });
 
@@ -52,6 +55,43 @@ public partial class App : System.Windows.Application
         contextMenu.Items.Add(quitItem);
 
         _notifyIcon.ContextMenuStrip = contextMenu;
+
+        InitializeGlobalHooks();
+    }
+
+    private void InitializeGlobalHooks()
+    {
+        try
+        {
+            _globalHookService = new GlobalHookService();
+
+            _globalHookService.HotkeyHoldStarted += (sender, args) =>
+            {
+                System.Drawing.Point cursorPos = System.Windows.Forms.Cursor.Position;
+                Debug.WriteLine($"[HotkeyHoldStarted] Ctrl+Shift held down at Cursor Position: {cursorPos}");
+            };
+
+            _globalHookService.HotkeyHoldEnded += (sender, args) =>
+            {
+                Debug.WriteLine("[HotkeyHoldEnded] Ctrl+Shift released.");
+            };
+
+            _globalHookService.ClickHoldStarted += (sender, point) =>
+            {
+                Debug.WriteLine($"[ClickHoldStarted] Left Click Hold started at Cursor Position: {point}");
+            };
+
+            _globalHookService.ClickHoldEnded += (sender, point) =>
+            {
+                Debug.WriteLine($"[ClickHoldEnded] Left Click Hold ended at Cursor Position: {point}");
+            };
+
+            _globalHookService.Start();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[App] Failed to initialize GlobalHookService: {ex.Message}");
+        }
     }
 
     private Icon LoadOrCreateIcon()
@@ -82,15 +122,25 @@ public partial class App : System.Windows.Application
         return Icon.FromHandle(hIcon);
     }
 
-    protected override void OnExit(ExitEventArgs e)
+    private void CleanupHooksAndNotifyIcon()
     {
+        if (_globalHookService != null)
+        {
+            _globalHookService.Dispose();
+            _globalHookService = null;
+        }
+
         if (_notifyIcon != null)
         {
             _notifyIcon.Visible = false;
             _notifyIcon.Dispose();
             _notifyIcon = null;
         }
+    }
 
+    protected override void OnExit(ExitEventArgs e)
+    {
+        CleanupHooksAndNotifyIcon();
         base.OnExit(e);
     }
 }
