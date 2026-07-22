@@ -51,11 +51,10 @@ public partial class WheelWindow : Window
     private const double CenterX = 200.0;
     private const double CenterY = 200.0;
 
-    private static readonly SolidColorBrush NormalBrush = new(MediaColor.FromArgb(210, 30, 30, 40));
-    private static readonly SolidColorBrush HighlightBrush = new(MediaColor.FromArgb(240, 0, 122, 204));
-    private static readonly SolidColorBrush BranchingBrush = new(MediaColor.FromArgb(240, 70, 150, 230));
-    private static readonly SolidColorBrush StrokeBrush = new(MediaColor.FromArgb(180, 255, 255, 255));
-    private static readonly SolidColorBrush TextBrush = new(Colors.White);
+    private static readonly SolidColorBrush NormalBrush = new(MediaColor.FromArgb(230, 19, 19, 21));
+    private static readonly SolidColorBrush HighlightBrush = new(MediaColor.FromArgb(230, 99, 102, 241));
+    private static readonly SolidColorBrush StrokeBrush = new(MediaColor.FromArgb(90, 255, 255, 255));
+    private static readonly SolidColorBrush TextBrush = new(MediaColor.FromRgb(250, 250, 250));
 
     private Ellipse? _centerCircle;
     private TextBlock? _centerTextBlock;

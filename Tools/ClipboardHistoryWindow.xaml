@@ -10,11 +10,7 @@
         ShowInTaskbar="False"
         ResizeMode="NoResize"
         WindowStartupLocation="Manual">
-    <Border Background="#F01E1E24" CornerRadius="12" BorderBrush="#60FFFFFF" BorderThickness="1.5" Margin="8">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Color="Black" Opacity="0.6"/>
-        </Border.Effect>
-
+    <Border Style="{StaticResource ShadcnCard}" Margin="8">
         <Grid Margin="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -23,16 +19,16 @@
 
             <!-- Header -->
             <DockPanel Grid.Row="0" Margin="0,0,0,8">
-                <TextBlock Text="Clipboard History" Foreground="White" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
-                <Button Content="✕" Click="OnCloseClick" Foreground="#A0FFFFFF" Background="Transparent" BorderThickness="0" FontSize="12" HorizontalAlignment="Right" Cursor="Hand"/>
+                <TextBlock Text="Clipboard History" Foreground="{StaticResource BrushTextPrimary}" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                <Button Content="✕" Click="OnCloseClick" Foreground="{StaticResource BrushTextSecondary}" Background="Transparent" BorderThickness="0" FontSize="12" HorizontalAlignment="Right" Cursor="Hand"/>
             </DockPanel>
 
             <!-- History List -->
             <ListBox x:Name="HistoryListBox" Grid.Row="1" Background="Transparent" BorderThickness="0" SelectionChanged="OnHistoryItemClick" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="#20FFFFFF" CornerRadius="6" Padding="8,6" Margin="0,2" HorizontalAlignment="Stretch">
-                            <TextBlock Text="{Binding}" Foreground="White" FontSize="12" TextTrimming="CharacterEllipsis" MaxHeight="36" TextWrapping="Wrap"/>
+                        <Border Background="{StaticResource BrushBackground}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="{StaticResource RadiusControl}" Padding="8,6" Margin="0,2" HorizontalAlignment="Stretch">
+                            <TextBlock Text="{Binding}" Foreground="{StaticResource BrushTextPrimary}" FontSize="12" TextTrimming="CharacterEllipsis" MaxHeight="36" TextWrapping="Wrap"/>
                         </Border>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

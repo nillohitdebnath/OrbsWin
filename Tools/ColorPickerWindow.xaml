@@ -10,11 +10,7 @@
         ShowInTaskbar="False"
         ResizeMode="NoResize"
         WindowStartupLocation="Manual">
-    <Border Background="#F01E1E24" CornerRadius="12" BorderBrush="#60FFFFFF" BorderThickness="1.5" Margin="8">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Color="Black" Opacity="0.6"/>
-        </Border.Effect>
-
+    <Border Style="{StaticResource ShadcnCard}" Margin="8">
         <Grid Margin="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -24,16 +20,16 @@
 
             <!-- Color Swatch & Hex Display -->
             <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
-                <Border x:Name="ColorPreviewBox" Width="24" Height="24" CornerRadius="4" BorderBrush="#80FFFFFF" BorderThickness="1" Margin="0,0,8,0">
+                <Border x:Name="ColorPreviewBox" Width="24" Height="24" CornerRadius="4" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Margin="0,0,8,0">
                     <Border.Background>
                         <SolidColorBrush x:Name="ColorPreviewBrush" Color="Black"/>
                     </Border.Background>
                 </Border>
-                <TextBlock x:Name="HexCodeText" Text="#000000" Foreground="White" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock x:Name="HexCodeText" Text="#000000" Foreground="{StaticResource BrushTextPrimary}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
             </StackPanel>
 
             <!-- Magnified Pixel Grid View -->
-            <Border Grid.Row="1" CornerRadius="8" BorderBrush="#40FFFFFF" BorderThickness="1" ClipToBounds="True" Background="Black">
+            <Border Grid.Row="1" CornerRadius="{StaticResource RadiusControl}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" ClipToBounds="True" Background="Black">
                 <Grid>
                     <Image x:Name="MagnifierImage" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
                     <!-- Center Crosshair reticle -->
@@ -42,7 +38,7 @@
             </Border>
 
             <!-- Toast / Guidance Text -->
-            <TextBlock x:Name="ToastText" Grid.Row="2" Text="Click to Copy | Esc to Cancel" Foreground="#B0FFFFFF" FontSize="10" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+            <TextBlock x:Name="ToastText" Grid.Row="2" Text="Click to Copy | Esc to Cancel" Foreground="{StaticResource BrushTextSecondary}" FontSize="10" HorizontalAlignment="Center" Margin="0,8,0,0"/>
         </Grid>
     </Border>
 </Window>
