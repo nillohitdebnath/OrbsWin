@@ -46,6 +46,8 @@ public partial class WheelWindow : Window
     private int _dwellTargetIndex = -1;
     private const int DwellThresholdMs = 400;
 
+    private string _searchQuery = string.Empty;
+
     private const double OuterRadius = 180.0;
     private const double InnerRadius = 45.0;
     private const double CenterX = 200.0;
@@ -78,7 +80,8 @@ public partial class WheelWindow : Window
         _dwellTimer.Tick += OnDwellTimerTick;
 
         Loaded += OnLoaded;
-        KeyDown += OnKeyDown;
+        PreviewKeyDown += OnPreviewKeyDown;
+        PreviewTextInput += OnPreviewTextInput;
         MouseMove += OnWindowMouseMove;
         MouseLeftButtonUp += OnWindowMouseLeftButtonUp;
 
@@ -203,6 +206,8 @@ public partial class WheelWindow : Window
         {
             AnimateWheelFadeIn();
         }
+
+        ApplyFilter();
     }
 
     private void AnimateWheelFadeIn()
@@ -247,6 +252,115 @@ public partial class WheelWindow : Window
         PathGeometry geometry = new PathGeometry();
         geometry.Figures.Add(figure);
         return geometry;
+    }
+
+    private void OnPreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (string.IsNullOrEmpty(e.Text)) return;
+
+        char c = e.Text[0];
+        if (!char.IsControl(c))
+        {
+            _searchQuery += e.Text;
+            UpdateSearchUI();
+            e.Handled = true;
+        }
+    }
+
+    private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == Key.Back)
+        {
+            if (_searchQuery.Length > 0)
+            {
+                _searchQuery = _searchQuery[..^1];
+                UpdateSearchUI();
+                e.Handled = true;
+            }
+        }
+        else if (e.Key == Key.Escape)
+        {
+            if (_searchQuery.Length > 0)
+            {
+                _searchQuery = string.Empty;
+                UpdateSearchUI();
+                e.Handled = true;
+            }
+            else
+            {
+                SelectionCancelled?.Invoke(this, EventArgs.Empty);
+                Close();
+                e.Handled = true;
+            }
+        }
+        else if (e.Key == Key.Enter)
+        {
+            if (_selectedIndex >= 0 && _selectedIndex < _currentItems.Count)
+            {
+                WheelItem selected = _currentItems[_selectedIndex];
+                if (selected.Children.Count > 0)
+                {
+                    BranchIntoChildLevel(selected);
+                }
+                else
+                {
+                    ItemSelected?.Invoke(this, selected);
+                    Close();
+                }
+                e.Handled = true;
+            }
+        }
+    }
+
+    private void UpdateSearchUI()
+    {
+        if (string.IsNullOrEmpty(_searchQuery))
+        {
+            SearchBoxBorder.Visibility = Visibility.Collapsed;
+            SearchQueryText.Text = string.Empty;
+        }
+        else
+        {
+            SearchBoxBorder.Visibility = Visibility.Visible;
+            SearchQueryText.Text = _searchQuery;
+        }
+
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        if (_slicePaths.Count != _currentItems.Count) return;
+
+        List<int> matchingIndices = new();
+
+        for (int i = 0; i < _currentItems.Count; i++)
+        {
+            bool matches = string.IsNullOrEmpty(_searchQuery) ||
+                           _currentItems[i].Name.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase);
+
+            if (matches)
+            {
+                matchingIndices.Add(i);
+                _slicePaths[i].Opacity = 1.0;
+                _sliceLabels[i].Opacity = 1.0;
+            }
+            else
+            {
+                _slicePaths[i].Opacity = 0.2;
+                _sliceLabels[i].Opacity = 0.25;
+            }
+        }
+
+        // If search filters down to exactly 1 match, auto-highlight it
+        if (matchingIndices.Count == 1)
+        {
+            UpdateHighlight(matchingIndices[0]);
+        }
+        else if (matchingIndices.Count == 0)
+        {
+            UpdateHighlight(-1);
+        }
     }
 
     private void OnWindowMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -346,6 +460,9 @@ public partial class WheelWindow : Window
 
     private void BranchIntoChildLevel(WheelItem item)
     {
+        _searchQuery = string.Empty;
+        UpdateSearchUI();
+
         _levelStack.Push(new MenuLevel(item.Children, item.Name));
         _currentItems = item.Children;
         RenderSlices(animate: true);
@@ -355,6 +472,9 @@ public partial class WheelWindow : Window
     {
         if (_levelStack.Count > 1)
         {
+            _searchQuery = string.Empty;
+            UpdateSearchUI();
+
             _levelStack.Pop();
             _currentItems = _levelStack.Peek().Items;
             RenderSlices(animate: true);
@@ -391,15 +511,6 @@ public partial class WheelWindow : Window
         }
 
         Close();
-    }
-
-    private void OnKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-    {
-        if (e.Key == Key.Escape)
-        {
-            SelectionCancelled?.Invoke(this, EventArgs.Empty);
-            Close();
-        }
     }
 
     private static class NativeMethods
